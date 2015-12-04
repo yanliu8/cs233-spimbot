@@ -37,9 +37,12 @@ REQUEST_PUZZLE_ACK = 0xffff00d8
 SUBMIT_SOLUTION = 0xffff00d4
 REQUEST_WORD    = 0xffff00dc
 
+GET_ENERGY     =  0Xffff0068
+
 .data
 .global smooshed
 smooshed: .word 0
+energy: .space 4
 node_memory: .space 4096
 puzzle_word: .space 128
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
@@ -120,7 +123,11 @@ set10:
 	j set
 set:
 	sw $t3 VELOCITY
-	bne $zero requested_puzzle begin
+	la $t3 energy
+	sw $t3 GET_ENERGY
+	bgt $t3 70 begin
+	lw $t3 requested_puzzle
+	bne $zero $t3 begin
 puzzle:
 	la $t0 puzzle_grid
 	sw $t0 REQUEST_PUZZLE
@@ -177,6 +184,7 @@ interrupt_dispatch:			# Interrupt:
 	j	done
 
 request_puzzle_interrupt:
+	sw $0 VELOCITY
 	la $a0 puzzle_word
 	sw $a0 REQUEST_WORD
 	la $k0 puzzle_grid
