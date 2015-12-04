@@ -62,19 +62,27 @@ main:
 	or $t0 REQUEST_PUZZLE_MASK
 	or $t0 1
 	mtc0 $t0 $12
-move_bot:	
+initial_position:	
 	lw $t0 BOT_Y
-	bge $t0 290 begin # the initial height of the bot, can be set higher
+	ble $t0 140 initial_down  # the initial height of the bot, can be set higher
+	bge $t0 160 intial_up
+	j begin
+intial_down:
 	li $t0 90
+	j set_angle
+intial_up:
+	li $t0 -90
+set_angle
 	sw $t0 ANGLE
 	li $t0 1
 	sw $t0 ANGLE_CONTROL 
 	li $t0 10
 	sw $t0 VELOCITY
-	j move_bot
+	j initial_position
+
 begin:
 	lw $t0 smooshed
-	blt $t0 5 not_smash
+	blt $t0 10 not_smash
 go_bot:
 	lw $t0 smooshed
 	beq $t0 $zero not_smash
@@ -211,7 +219,7 @@ fruit_smooshed_interrupt:
 
 bonk_interrupt:
 	lw $a0 smooshed
-	blt $a0 5 no_smash
+	blt $a0 10 no_smash
 smash:
 	lw $a0 smooshed
 	beq $a0 $zero no_smash
