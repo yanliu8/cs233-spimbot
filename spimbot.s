@@ -42,7 +42,6 @@ GET_ENERGY     =  0Xffff0068
 .data
 .global smooshed
 smooshed: .word 0
-energy: .space 4
 node_memory: .space 4096
 puzzle_word: .space 128
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
@@ -123,8 +122,7 @@ set10:
 	j set
 set:
 	sw $t3 VELOCITY
-	la $t3 energy
-	sw $t3 GET_ENERGY
+	lw $t3 GET_ENERGY
 	bgt $t3 70 begin
 	lw $t3 requested_puzzle
 	bne $zero $t3 begin
