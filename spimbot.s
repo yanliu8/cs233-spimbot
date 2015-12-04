@@ -37,7 +37,7 @@ REQUEST_PUZZLE_ACK = 0xffff00d8
 SUBMIT_SOLUTION = 0xffff00d4
 REQUEST_WORD    = 0xffff00dc
 
-GET_ENERGY     =  0Xffff0068
+GET_ENERGY     =  0xffff0068
 
 .data
 .global smooshed
