@@ -72,7 +72,7 @@ intial_down:
 	j set_angle
 intial_up:
 	li $t0 -90
-set_angle
+set_angle:
 	sw $t0 ANGLE
 	li $t0 1
 	sw $t0 ANGLE_CONTROL 
@@ -97,7 +97,23 @@ not_smash:
 	la $t0 fruit_data
 	sw $t0 FRUIT_SCAN
 	lw $t4 0($t0)
-	beq $t4 0 exit
+	beq $t4 $0 exit
+	add $t0 $t0 128 # $t0 = fruits[8];
+	lw $t3 0($t0) # t3 = target.id
+	lw $t4 4($t0) # t4 = target.points
+	move $t5 $t0 # $t5 = target.add
+find_target:
+	lw $t1 4($t0)  # $t1 = points
+	lw $t2 0($t0)  # $t2 = id
+	blt $t1 $t4 dont_change_target
+	move $t3 $t2
+	move $t4 $t1
+	move $t5 $t1
+dont_change_target:
+	add $t0 $t0 16
+	lw $t1 0($t0)
+	bne $t1 $0 find_target
+	move $t0 $t5
 	lw $t0 8($t0) #  $t0 = fruit_x
 	lw $t1 BOT_X  # $t1 = bot_x
 	sub $t2 $t0 $t1  # $t2 = distance = fruit - bot
