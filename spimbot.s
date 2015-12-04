@@ -40,17 +40,19 @@ REQUEST_WORD    = 0xffff00dc
 GET_ENERGY     =  0xffff0068
 
 .data
-.global smooshed
+.globl smooshed
 smooshed: .word 0
 node_memory: .space 4096
 puzzle_word: .space 128
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
 requested_puzzle: .word 0
 # Stores the address for the next node to allocate
-.global new_node_address
+.globl new_node_address
 new_node_address: .word node_memory
 # Don't put anything below this just in case they malloc more than 4096
-node_memory: .space 4096
+
+.align 2
+fruit_data: .space 260
 
 .text
 main:
@@ -67,7 +69,7 @@ initial_position:
 	ble $t0 140 initial_down  # the initial height of the bot, can be set higher
 	bge $t0 160 intial_up
 	j begin
-intial_down:
+initial_down:
 	li $t0 90
 	j set_angle
 intial_up:
@@ -102,6 +104,7 @@ not_smash:
 	lw $t3 0($t0) # t3 = target.id
 	lw $t4 4($t0) # t4 = target.points
 	move $t5 $t0 # $t5 = target.add
+	add $t1 $t1 16
 find_target:
 	lw $t1 4($t0)  # $t1 = points
 	lw $t2 0($t0)  # $t2 = id
@@ -156,7 +159,7 @@ puzzle:
 	li $t0 1
 	sw $t0 requested_puzzle
 	j begin
-
+exit:
 	jr	$ra
 
 
@@ -214,7 +217,8 @@ request_puzzle_interrupt:
 	la $a1 puzzle_word
 	lw $a2 0($k0)
 	lw $a3 4($k0)
-	jal search_neighbors
+	la $k0 search_neighbors
+	jalr $k0
 	sw $v0 SUBMIT_SOLUTION
 	li $a0 0
 	sw $a0 requested_puzzle
