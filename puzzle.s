@@ -1,4 +1,4 @@
-.text
+.data
 
 ## Node *
 ## search_neighbors(char *puzzle, const char *word, int row, int col) {
@@ -31,6 +31,11 @@
 ##     }
 ##     return NULL;
 ## }
+intro_str1: .asciiz "Finding word LANGUAGE\n"
+intro_str2: .asciiz "\nFinding word HELLOWORLD\n"
+intro_str3: .asciiz "\nFinding word RILHGAR\n"
+
+pll_no_word_str: .asciiz "No word in linked list\n"
 
 .globl directions
 directions:
@@ -38,6 +43,12 @@ directions:
     .word  0  1
     .word  1  0
     .word  0 -1
+
+PRINT_INT = 1
+PRINT_STRING = 4
+PRINT_CHAR = 11
+
+.text
 
 .globl search_neighbors
 search_neighbors:
@@ -130,4 +141,106 @@ return:
     lw $s8 36($sp)
     add $sp $sp 40
     jr $ra
+
+# Prints an array of chars out. Uses num_rows and num_cols. Feel free to use
+# for debugging.
+# Arguments:
+#   $a0: pointer to beginning of array
+# Returns: nothing
+.globl print_array
+print_array:
+    sub $sp, $sp, 16
+    sw  $ra, 0($sp)
+    sw  $s0, 4($sp)     # $s0 = array
+    sw  $s1, 8($sp)     # $s1 = row
+    sw  $s2, 12($sp)        # $s2 = col
+    move    $s0, $a0
+
+    li  $s1, 0
+pa_row_loop:
+    lw  $t0, num_rows
+    bge $s1, $t0, pa_row_loop_end
+
+    li  $s2, 0
+pa_col_loop:
+    lw  $t0, num_cols
+    bge $s2, $t0, pa_col_loop_end
+
+    mul $a0, $s1, $t0       # $t1 = row * num_cols
+    add $a0, $a0, $s2       # $t1 = row * num_cols + col
+    add $a0, $s0, $a0       # $a0 = &array[row * num_cols + col]
+
+    lb  $a0, 0($a0)     # $a0 = array[row * num_cols + col]
+    jal print_char_and_space
+
+    add $s2, $s2, 1
+    j   pa_col_loop
+
+pa_col_loop_end:
+    jal print_newline
+    add $s1, $s1, 1
+    j   pa_row_loop
+
+pa_row_loop_end:
+    jal print_newline
+    lw  $ra, 0($sp)
+    lw  $s0, 4($sp)
+    lw  $s1, 8($sp)
+    lw  $s2, 12($sp)
+    add $sp, $sp, 16
+    jr  $ra
+
+# Prints the strings that was stored in the linked list. Feel free to use for
+# debugging.
+# Arguments:
+#   $a0: pointer to beginning of puzzle
+#   $a1: pointer to head of linked list
+# Returns: nothing
+.globl print_linked_list
+print_linked_list:
+    bne $a1, 0, pll_start
+    la  $a0, pll_no_word_str
+    j   print_string
+
+pll_start:
+    move    $t0, $a0        # $t0 = $a0 = puzzle
+
+pll_loop:
+    beq $a1, 0, pll_return
+
+    lw  $t1, 0($a1)     # $t1 = curr->row
+    lw  $t2, 4($a1)     # $t2 = curr->col
+    lw  $a0, num_cols       # $a0 = num_cols
+    mul $a0, $t1, $a0       # $a0 = curr->row * num_cols
+    add $a0, $a0, $t2       # $a0 = curr->row * num_cols + curr->col
+    add $a0, $a0, $t0       # $a0 = &puzzle[curr->row * num_cols + curr->col]
+
+    lb  $a0, 0($a0)     # $a0 = puzzle[curr->row * num_cols + curr->col]
+    li  $v0, PRINT_CHAR
+    syscall
+    li  $a0, ' '
+    syscall
+    li  $a0, '('
+    syscall
+    move    $a0, $t1
+    li  $v0, PRINT_INT
+    syscall
+    li  $a0, ','
+    li  $v0, PRINT_CHAR
+    syscall
+    move    $a0, $t2
+    li  $v0, PRINT_INT
+    syscall
+    li  $a0, ')'
+    li  $v0, PRINT_CHAR
+    syscall
+    li  $a0, '\n'
+    syscall
+
+    lw  $a1, 8($a1)
+    j   pll_loop
+
+pll_return:
+    jr  $ra
+
 

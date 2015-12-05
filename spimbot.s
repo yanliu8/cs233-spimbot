@@ -49,10 +49,17 @@ requested_puzzle: .word 0
 # Stores the address for the next node to allocate
 .globl new_node_address
 new_node_address: .word node_memory
+
+.globl num_rows
+.globl num_cols
+num_cols: .space 4
+num_rows: .space 4
 # Don't put anything below this just in case they malloc more than 4096
 
 .align 2
 fruit_data: .space 260
+
+
 
 .text
 main:
@@ -147,8 +154,8 @@ set10:
 	j set
 set:
 	sw $t3 VELOCITY
-	#lw $t3 GET_ENERGY
-	#bgt $t3 70 begin
+	lw $t3 GET_ENERGY
+	bgt $t3 70 begin
 	lw $t3 requested_puzzle
 	bne $zero $t3 begin
 puzzle:
@@ -211,11 +218,20 @@ request_puzzle_interrupt:
 	la $a0 puzzle_word
 	sw $a0 REQUEST_WORD
 	la $k0 puzzle_grid
+	lw $k1 0($k0)
+	sw $k1 num_rows
+	lw $k1 4($k0)
+	sw $k1 num_cols
 	add $a0 $k0 8
 	la $a1 puzzle_word
-	lw $a2 0($k0)
-	lw $a3 4($k0)
+	li $a2 0
+	li $a3 0
 	la $k0 search_neighbors
+	jalr $k0
+	la $k0 puzzle_grid
+	add $a0 $k0 8
+	move $a1 $v0
+	la $k0 print_linked_list
 	jalr $k0
 	sw $v0 SUBMIT_SOLUTION
 	li $a0 0

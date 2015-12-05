@@ -1,4 +1,46 @@
+.data
+NODE_SIZE = 12
 .text
+# Allocates "memory" for a new node using the space in node_memory.
+# Arguments: none
+# Returns: pointer to new node
+.globl allocate_new_node
+allocate_new_node:
+    lw  $v0, new_node_address
+    add $t0, $v0, NODE_SIZE
+    sw  $t0, new_node_address
+    jr  $ra
+
+# Gets char from a 2D array
+# Arguments:
+#   $a0: pointer to beginning of 2D array
+#   $a1: row
+#   $a2: col
+# Returns: char at that location
+.globl get_char
+get_char:
+    lw  $v0, num_cols
+    mul $v0, $a1, $v0   # row * num_cols
+    add $v0, $v0, $a2   # row * num_cols + col
+    add $v0, $a0, $v0   # &array[row * num_cols + col]
+    lb  $v0, 0($v0) # array[row * num_cols + col]
+    jr  $ra
+
+# Sets a char in a 2D array
+# Arguments:
+#   $a0: pointer to beginning of 2D array
+#   $a1: row
+#   $a2: col
+#   $a3: char to store into array
+# Returns: nothing
+.globl set_char
+set_char:
+    lw  $v0, num_cols
+    mul $v0, $a1, $v0   # row * num_cols
+    add $v0, $v0, $a2   # row * num_cols + col
+    add $v0, $a0, $v0   # &array[row * num_cols + col]
+    sb  $a3, 0($v0) # array[row * num_cols + col] = c
+    jr  $ra
 
 ## Node *
 ## set_node(int row, int col, Node *next) {
