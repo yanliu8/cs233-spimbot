@@ -32,6 +32,13 @@
 ##     return NULL;
 ## }
 
+.globl directions
+directions:
+    .word -1  0
+    .word  0  1
+    .word  1  0
+    .word  0 -1
+
 .globl search_neighbors
 search_neighbors:
 	# Your code goes here :)

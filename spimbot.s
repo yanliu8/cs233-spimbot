@@ -37,7 +37,7 @@ REQUEST_PUZZLE_ACK = 0xffff00d8
 SUBMIT_SOLUTION = 0xffff00d4
 REQUEST_WORD    = 0xffff00dc
 
-GET_ENERGY     =  0xffff0068
+GET_ENERGY     =  0xffff00c8
 
 .data
 .globl smooshed
@@ -100,18 +100,16 @@ not_smash:
 	sw $t0 FRUIT_SCAN
 	lw $t4 0($t0)
 	beq $t4 $0 exit
-	add $t0 $t0 128 # $t0 = fruits[8];
 	lw $t3 0($t0) # t3 = target.id
 	lw $t4 4($t0) # t4 = target.points
 	move $t5 $t0 # $t5 = target.add
-	add $t1 $t1 16
 find_target:
 	lw $t1 4($t0)  # $t1 = points
 	lw $t2 0($t0)  # $t2 = id
-	blt $t1 $t4 dont_change_target
+	ble $t1 $t4 dont_change_target
 	move $t3 $t2
 	move $t4 $t1
-	move $t5 $t1
+	move $t5 $t0
 dont_change_target:
 	add $t0 $t0 16
 	lw $t1 0($t0)
@@ -149,8 +147,8 @@ set10:
 	j set
 set:
 	sw $t3 VELOCITY
-	lw $t3 GET_ENERGY
-	bgt $t3 70 begin
+	#lw $t3 GET_ENERGY
+	#bgt $t3 70 begin
 	lw $t3 requested_puzzle
 	bne $zero $t3 begin
 puzzle:
@@ -255,7 +253,7 @@ no_smash:
 	li $a0 1
 	sw $a0 ANGLE_CONTROL
 	lw $s1 BOT_Y
-	bge $s1 290 no_smash
+	bge $s1 150 no_smash
 	sw	$a1, BONK_ACK		# acknowledge interrupt
 	sw	$zero, VELOCITY		# ???
 	j	interrupt_dispatch	# see if other interrupts are waiting
