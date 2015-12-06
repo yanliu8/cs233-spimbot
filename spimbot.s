@@ -41,11 +41,13 @@ GET_ENERGY     =  0xffff00c8
 
 .data
 .globl smooshed
-smooshed: .word 0
+smooshed: .space 4
+requested_puzzle: .word 0
+.align 2
 node_memory: .space 4096
+.globl puzzle_word
 puzzle_word: .space 128
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
-requested_puzzle: .word 0
 # Stores the address for the next node to allocate
 .globl new_node_address
 new_node_address: .word node_memory
@@ -56,7 +58,6 @@ num_cols: .space 4
 num_rows: .space 4
 # Don't put anything below this just in case they malloc more than 4096
 
-.align 2
 fruit_data: .space 260
 
 
@@ -91,7 +92,7 @@ set_angle:
 
 begin:
 	lw $t0 smooshed
-	blt $t0 10 not_smash
+	blt $t0 5 not_smash
 go_bot:
 	lw $t0 smooshed
 	beq $t0 $zero not_smash
@@ -155,7 +156,7 @@ set10:
 set:
 	sw $t3 VELOCITY
 	lw $t3 GET_ENERGY
-	bgt $t3 70 begin
+	bgt $t3 100 begin
 	lw $t3 requested_puzzle
 	bne $zero $t3 begin
 puzzle:
@@ -169,7 +170,7 @@ exit:
 
 
 .kdata				# interrupt handler data (separated just for readability)
-chunkIH:	.space 8	# space for two registers
+chunkIH:	.space 16	# space for two registers
 non_intrpt_str:	.asciiz "Non-interrupt exception\n"
 unhandled_str:	.asciiz "Unhandled interrupt type\n"
 
@@ -218,27 +219,22 @@ request_puzzle_interrupt:
 	la $a0 puzzle_word
 	sw $a0 REQUEST_WORD
 	la $k0 puzzle_grid
-	lw $k1 0($k0)
-	sw $k1 num_rows
-	lw $k1 4($k0)
-	sw $k1 num_cols
+	lw $a1 0($k0)
+	sw $a1 num_rows
+	lw $a1 4($k0)
+	sw $a1 num_cols
 	add $a0 $k0 8
 	la $a1 puzzle_word
+	la $k0 solve_puzzle
 	li $a2 0
 	li $a3 0
-	la $k0 search_neighbors
-	jalr $k0
-	la $k0 puzzle_grid
-	add $a0 $k0 8
-	move $a1 $v0
-	la $k0 print_linked_list
 	jalr $k0
 	sw $v0 SUBMIT_SOLUTION
 	li $a0 0
 	sw $a0 requested_puzzle
 	la $a0 node_memory
 	sw $a0 new_node_address
-
+	sw $a0 REQUEST_PUZZLE_ACK
 	j interrupt_dispatch
 	
 
@@ -253,7 +249,7 @@ fruit_smooshed_interrupt:
 
 bonk_interrupt:
 	lw $a0 smooshed
-	blt $a0 10 no_smash
+	blt $a0 5 no_smash
 smash:
 	lw $a0 smooshed
 	beq $a0 $zero no_smash
@@ -272,7 +268,7 @@ no_smash:
 	bge $s1 150 no_smash
 	sw	$a1, BONK_ACK		# acknowledge interrupt
 	sw	$zero, VELOCITY		# ???
-	j	interrupt_dispatch	# see if other interrupts are waiting
+	j	interrupt_dispatch		# see if other interrupts are waiting
 
 timer_interrupt:
 	sw	$a1, TIMER_ACK		# acknowledge interrupt
@@ -297,6 +293,8 @@ done:
 	la	$k0, chunkIH
 	lw	$a0, 0($k0)		# Restore saved registers
 	lw	$a1, 4($k0)
+	lw  $a2, 8($k0)
+	lw  $a3, 12($k0)
 .set noat
 	move	$at, $k1		# Restore $at
 .set at 

@@ -49,6 +49,53 @@ PRINT_STRING = 4
 PRINT_CHAR = 11
 
 .text
+.globl solve_puzzle
+solve_puzzle:
+    sub $sp $sp 20
+    sw $ra 0($sp)
+    sw $s0 4($sp)
+    sw $s1 8($sp)
+    sw $s2 12($sp)
+    sw $s3 16($sp)
+    lb $s1 0($a1)
+    move $s2 $a2
+    move $s3 $a3
+    move $a1 $a2
+    move $a2 $a3
+    la $s0 get_char
+    jalr $s0
+    bne $s1 $v0 not_target
+    move $a3 $s3
+    add $a3 $a3 -1
+    move $a2 $s2
+    la $a1 puzzle_word
+    jal search_neighbors
+    bne $v0 $0 return_puzzle
+not_target:
+    add $a3 $s3 1
+    move $a2 $s2
+    lw $s0 num_cols
+    bne $a3 $s0 no_increase_row
+    li $a3 0
+    add $a2 $a2 1
+    lw $s0 num_rows
+    blt $a2 $s0 no_increase_row
+    move $v0 $0
+    j return_puzzle
+no_increase_row:
+    la $a1 puzzle_word
+    jal solve_puzzle
+return_puzzle:
+    lw $ra 0($sp)
+    lw $s0 4($sp)
+    lw $s1 8($sp)
+    lw $s2 12($sp)
+    lw $s3 16($sp)
+    add $sp $sp 20
+    jr $ra
+
+
+
 
 .globl search_neighbors
 search_neighbors:
