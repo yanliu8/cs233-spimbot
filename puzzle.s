@@ -130,10 +130,18 @@ loop:
     add $s2 $s2 $s7 # $s2 = next_col
     lw $s3 num_rows # $s3 = num_rows
     lw $s4 num_cols  # $s4 = num_cols
-    ble $s1 -1 endif
-    bge $s1 $s3 endif
-    ble $s2 -1 endif
-    bge $s2 $s4 endif
+    bgt $s1 -1 if1
+    add $s1 $s3 -1
+if1:
+    bgt $s2 -1 if2
+    add $s2 $s4 -1
+if2:
+    blt $s1 $s3 if3
+    li $s1 0
+if3:
+    blt $s2 $s4 if4
+    li $s2 0
+if4:
     move $a0 $s5
     move $a1 $s1
     move $a2 $s2

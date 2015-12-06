@@ -156,7 +156,7 @@ set10:
 set:
 	sw $t3 VELOCITY
 	lw $t3 GET_ENERGY
-	bgt $t3 100 begin
+	bgt $t3 50 begin
 	lw $t3 requested_puzzle
 	bne $zero $t3 begin
 puzzle:
@@ -215,7 +215,12 @@ interrupt_dispatch:			# Interrupt:
 	j	done
 
 request_puzzle_interrupt:
-	sw $0 VELOCITY
+	li $a0 10
+	sw $a0 VELOCITY
+	li $a0 90
+	sw $a0 ANGLE
+	li $a0 1
+	sw $a0 ANGLE_CONTROL 
 	la $a0 puzzle_word
 	sw $a0 REQUEST_WORD
 	la $k0 puzzle_grid
