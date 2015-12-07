@@ -44,21 +44,22 @@ GET_ENERGY     =  0xffff00c8
 smooshed: .space 4
 requested_puzzle: .word 0
 .align 2
+fruit_data: .space 260
 node_memory: .space 4096
 .globl puzzle_word
 puzzle_word: .space 128
+
 puzzle_grid: .space 8200 # rows + cols + puzzle gird so 8192 + 8
 # Stores the address for the next node to allocate
 .globl new_node_address
 new_node_address: .word node_memory
-
+cherry_calculation: .space 4
 .globl num_rows
 .globl num_cols
 num_cols: .space 4
 num_rows: .space 4
 # Don't put anything below this just in case they malloc more than 4096
 
-fruit_data: .space 260
 
 
 
@@ -74,8 +75,8 @@ main:
 	mtc0 $t0 $12
 initial_position:	
 	lw $t0 BOT_Y
-	ble $t0 140 initial_down  # the initial height of the bot, can be set higher
-	bge $t0 160 intial_up
+	ble $t0 240 initial_down  # the initial height of the bot, can be set higher
+	bge $t0 260 intial_up
 	j begin
 initial_down:
 	li $t0 90
@@ -107,7 +108,7 @@ not_smash:
 	la $t0 fruit_data
 	sw $t0 FRUIT_SCAN
 	lw $t4 0($t0)
-	beq $t4 $0 exit
+	beq $t4 $0 not_smash
 	lw $t3 0($t0) # t3 = target.id
 	lw $t4 4($t0) # t4 = target.points
 	move $t5 $t0 # $t5 = target.add
@@ -115,6 +116,7 @@ find_target:
 	lw $t1 4($t0)  # $t1 = points
 	lw $t2 0($t0)  # $t2 = id
 	ble $t1 $t4 dont_change_target
+	beq $t1 6 dont_change_target
 	move $t3 $t2
 	move $t4 $t1
 	move $t5 $t0
@@ -123,50 +125,266 @@ dont_change_target:
 	lw $t1 0($t0)
 	bne $t1 $0 find_target
 	move $t0 $t5
-	lw $t0 8($t0) #  $t0 = fruit_x
-	lw $t1 BOT_X  # $t1 = bot_x
-	sub $t2 $t0 $t1  # $t2 = distance = fruit - bot
-	ble $t0 $t1 move_left
-	j move_right
-move_left:
-	li $t3 180
-	sw $t3 ANGLE
-	li $t3 1
-	sw $t3 ANGLE_CONTROL
-	ble $t2 -20 set10
-	ble $t2 -5 set5
-	j set2
-move_right:
-	li $t3 0
-	sw $t3 ANGLE
-	li $t3 1
-	sw $t3 ANGLE_CONTROL
-	bge $t2 20 set10
-	bge $t2 5 set5
-	j set2
-set2:
-	li $t3 2
-	j set
-set5:
-	li $t3 5
-	j set
-set10:
-	li $t3 10
-	j set
-set:
-	sw $t3 VELOCITY
+decide_type:
+	lw $t1 4($t0)
+	move $a0 $t0
+	beq $t1 10 chase_cherry
+	beq $t1 6 cahse_loquat
+	beq $t1 4 chase_guava
+	beq $t1 2 chase_mango
+	beq $t1 1 chase_lemon
+chase_cherry:
+	jal guava_and_cherry
+	j energy
+chase_mango:
+	jal lemon_mango
+	j energy
+chase_guava:
+	jal guava_and_cherry
+	j energy
+chase_lemon:
+	jal lemon_mango
+	j energy
+cahse_loquat:
+	jal lemon_mango
+	j energy
+energy:
 	lw $t3 GET_ENERGY
-	bgt $t3 50 begin
+	bgt $t3 50 initial_position
 	lw $t3 requested_puzzle
-	bne $zero $t3 begin
+	beq $zero $t3 puzzle
+	j initial_position
+
 puzzle:
 	la $t0 puzzle_grid
 	sw $t0 REQUEST_PUZZLE
 	li $t0 1
 	sw $t0 requested_puzzle
-	j begin
-exit:
-	jr	$ra
+	j initial_position
+
+
+# a0: the address of the target fruit
+lemon_mango:
+	sub $sp $sp 20
+	sw $ra 0($sp)
+    sw $s0 4($sp)
+    sw $s1 8($sp)
+    sw $s2 12($sp)
+    sw $s3 16($sp)
+lemon:
+	lw $s1 8($a0)
+	lw $s0 BOT_X  # $t2 = bot_x
+	sub $s2 $s1 $s0  # $t2 = distance = fruit - bot
+	bgt $s2 2 left_or_right
+	blt $s2 -2 left_or_right
+	li $s3 10
+	sw $s3 VELOCITY
+	li $s3 -90
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	lw $s3 BOT_Y
+	ble $s3 250 stop
+	li $s3 10
+	j set
+left_or_right:
+	ble $s1 $s0 move_left
+	j move_right
+move_left:
+	li $s3 180
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	ble $s2 -20 set10
+	ble $s2 -5 set5
+	ble $s2 -3 set2
+	j set1
+move_right:
+	li $s3 0
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	bge $s2 20 set10
+	bge $s2 5 set5
+	bge $s2 3 set2
+	j set1
+stop:
+	li $s3 0
+	j set
+set1:
+	li $s3 1
+	j set
+set2:
+	li $s3 2
+	j set
+set5:
+	li $s3 5
+	j set
+set10:
+	li $s3 10
+	j set
+set:
+	sw $s3 VELOCITY
+	jal get_position
+	beq $v0 $0 return_lemon
+	lw $s0 12($v0)
+	lw $s1 BOT_Y
+	bgt $s0 $s1 return_lemon
+	move $a0 $v0
+	j lemon
+return_lemon:
+	lw $ra 0($sp)
+    lw $s0 4($sp)
+    lw $s1 8($sp)
+    lw $s2 12($sp)
+    lw $s3 16($sp)
+    add $sp $sp 20
+    jr $ra
+
+
+guava_and_cherry:
+	sub $sp $sp 32
+	sw $ra 0($sp)
+	sw $s0 4($sp)
+	sw $s1 8($sp)
+	sw $s2 12($sp)
+	sw $s3 16($sp)
+	sw $s4 20($sp)
+	sw $s5 24($sp)
+	sw $s6 28($sp)
+	lw $s0 8($a0) #s0 = x;
+	lw $s1 12($a0) #s1 = y;
+calculate_speed:
+	sw $0 cherry_calculation
+	lw $s2 TIMER
+	add $s2 $s2 20
+	sw $s2 TIMER
+loop:
+	lw $s2 cherry_calculation
+	bne $s2 $0 continue
+	j loop
+continue:
+	sw $0 cherry_calculation
+	jal get_position
+	beq $v0 $0 return_cherry
+	move $a0 $v0
+	lw $s2 8($a0) #s2 = new_x;
+	lw $s3 12($a0) #s3 = new_y;
+	lw $s4 BOT_Y
+	bgt $s3 $s4 return_cherry
+	sub $s5 $s4 $s1
+	sub $s6 $s2 $s0
+	mul $s5 $s5 $s6
+	sub $s6 $s3 $s1
+	div $s5 $s6
+	mfhi $s5
+	add $s5 $s5 $s0
+	bgt $s5 300 if1 #s5 = target_x
+	blt $s5 0 if2
+	j cherry_left_or_right
+if1:
+	sub $s5 $s5 300
+	j cherry_left_or_right
+if2:
+	add $s5 $s5 300
+	j cherry_left_or_right
+cherry_left_or_right:
+	bge $s5 295 return_cherry
+	ble $s5 5 return_cherry
+	lw $s2 BOT_X
+	sub $s2 $s5 $s2 #s2 = botx - target_x
+	bge $s2 1 cherry_right
+	blt $s2 -1 cherry_left
+	j cherry_wait
+cherry_left:
+	li $s3 180
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	ble $s2 -20 cherry_set10
+	ble $s2 -5 cherry_set5
+	ble $s2 -3 cherry_set2
+	j cherry_set1
+cherry_right:
+	li $s3 0
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	bge $s2 20 cherry_set10
+	bge $s2 5 cherry_set5
+	bge $s2 3 cherry_set2
+	j cherry_set1
+cherry_set1:
+	li $s3 1
+	j cherry_set
+cherry_set2:
+	li $s3 2
+	j cherry_set
+cherry_set5:
+	li $s3 5
+	j cherry_set
+cherry_set10:
+	li $s3 10
+	j cherry_set
+cherry_set:
+	sw $s3 VELOCITY
+	j calculate_speed
+cherry_wait:
+	li $s3 0
+	sw $s3 VELOCITY
+	jal get_position
+	move $a0 $v0
+	beq $v0 $0 return_cherry
+	lw $s2 BOT_Y
+	lw $s3 12($v0)
+	bgt $s3 $s2 return_cherry
+	j cherry_wait
+return_cherry:
+	lw $ra 0($sp)
+	lw $s0 4($sp)
+	lw $s1 8($sp)
+	lw $s2 12($sp)
+	lw $s3 16($sp)
+	lw $s4 20($sp)
+	lw $s5 24($sp)
+	lw $s6 28($sp)
+	add $sp $sp 32
+	jr $ra
+
+
+
+
+# a0: old address of the target fruit
+# v0: new address of the target fruit, null if does not exist.
+get_position:
+	sub $sp $sp 12
+	sw $ra 0($sp)
+	sw $s0 4($sp)
+	sw $s1 8($sp)
+	lw $s0 0($a0)
+	la $s1 fruit_data
+	sw $s1 FRUIT_SCAN
+get_id:
+	lw $s2 0($s1)
+	beq $s2 $0 return_false
+	beq $s2 $s0 return_position
+	add $s1 $s1 16
+	j get_id
+return_position:
+	move $v0 $s1
+	lw $ra 0($sp)
+	lw $s0 4($sp)
+	lw $s1 8($sp)
+	add $sp $sp 12
+	jr $ra
+return_false:
+	move $v0 $0
+	lw $ra 0($sp)
+	lw $s0 4($sp)
+	lw $s1 8($sp)
+	add $sp $sp 12
+	jr $ra
+
 
 
 .kdata				# interrupt handler data (separated just for readability)
@@ -253,8 +471,8 @@ fruit_smooshed_interrupt:
 
 
 bonk_interrupt:
-	lw $a0 smooshed
-	blt $a0 5 no_smash
+	lw $a0 BOT_Y
+	blt $a0 290 no_smash
 smash:
 	lw $a0 smooshed
 	beq $a0 $zero no_smash
@@ -270,7 +488,9 @@ no_smash:
 	li $a0 1
 	sw $a0 ANGLE_CONTROL
 	lw $s1 BOT_Y
-	bge $s1 150 no_smash
+	ble $s1 250 return_smash
+	j no_smash
+return_smash:
 	sw	$a1, BONK_ACK		# acknowledge interrupt
 	sw	$zero, VELOCITY		# ???
 	j	interrupt_dispatch		# see if other interrupts are waiting
@@ -278,13 +498,8 @@ no_smash:
 timer_interrupt:
 	sw	$a1, TIMER_ACK		# acknowledge interrupt
 
-	li	$a0, 90			# ???
-	sw	$a0, ANGLE		# ???
-	sw	$zero, ANGLE_CONTROL	# ???
-
-	lw	$v0, TIMER		# current time
-	add	$v0, $v0, 50000  
-	sw	$v0, TIMER		# request timer in 50000 cycles
+	li  $a1, 1
+	sw	$a1, cherry_calculation 
 
 	j	interrupt_dispatch	# see if other interrupts are waiting
 

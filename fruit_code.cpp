@@ -32,7 +32,7 @@ void chasecherry(fruit * target)
 	if (cur == NULL)
 		return;
 	int k = (cur->y - target->y) / (cur->x - target->x);
-	int x = (botx - cur->x) * k + botx;
+	int x = (botx - cur->x) / k + botx;
 	gotox(x);
 
 }
