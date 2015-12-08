@@ -116,13 +116,18 @@ not_smash:
 find_target:
 	lw $t1 4($t0)  # $t1 = points
 	lw $t2 0($t0)  # $t2 = id
-  blt $t1 9 next
+  #blt $t1 9 next
 	#beq $t1 4 dont_change_target
   #beq $t1 2 dont_change_target
   #beq $t1 1 dont_change_target
   #beq $t1 10 dont_change_target
   #ble $t1 $t4 dont_change_target
-
+	beq $t4 4 dont_change_target
+	beq $t4 10 change_target
+	beq $t1 10 dont_change_target
+	beq $t1 2 dont_change_target
+	ble $t1 $t4 dont_change_target
+	change_target:
 	move $t3 $t2
 	move $t4 $t1
 	move $t5 $t0
@@ -176,24 +181,24 @@ puzzle:
 lemon_mango:
 	sub $sp $sp 20
 	sw $ra 0($sp)
-    sw $s0 4($sp)
-    sw $s1 8($sp)
-    sw $s2 12($sp)
-    sw $s3 16($sp)
+  sw $s0 4($sp)
+  sw $s1 8($sp)
+  sw $s2 12($sp)
+  sw $s3 16($sp)
 lemon:
 	lw $s1 8($a0)
 	lw $s0 BOT_X  # $t2 = bot_x
 	sub $s2 $s1 $s0  # $t2 = distance = fruit - bot
-	bgt $s2 1 left_or_right
-	blt $s2 -1 left_or_right
-	#li $s3 10
-	#sw $s3 VELOCITY
-	#li $s3 -90
-	#sw $s3 ANGLE
-	#li $s3 1
-	#sw $s3 ANGLE_CONTROL
-	#lw $s3 BOT_Y
-	#ble $s3 250 stop
+	bne $s2 0 left_or_right
+	#blt $s2 -1 left_or_right
+	li $s3 10
+	sw $s3 VELOCITY
+	li $s3 -90
+	sw $s3 ANGLE
+	li $s3 1
+	sw $s3 ANGLE_CONTROL
+	lw $s3 BOT_Y
+	ble $s3 250 stop
 	li $s3 10
 	j set
 left_or_right:
@@ -243,12 +248,12 @@ set:
 	j lemon
 return_lemon:
 	lw $ra 0($sp)
-    lw $s0 4($sp)
-    lw $s1 8($sp)
-    lw $s2 12($sp)
-    lw $s3 16($sp)
-    add $sp $sp 20
-    jr $ra
+  lw $s0 4($sp)
+  lw $s1 8($sp)
+  lw $s2 12($sp)
+  lw $s3 16($sp)
+  add $sp $sp 20
+  jr $ra
 
 
 guava_and_cherry:
@@ -366,10 +371,11 @@ return_cherry:
 # a0: old address of the target fruit
 # v0: new address of the target fruit, null if does not exist.
 get_position:
-	sub $sp $sp 12
+	sub $sp $sp 16
 	sw $ra 0($sp)
 	sw $s0 4($sp)
 	sw $s1 8($sp)
+	sw $s2 12($sp)
 	lw $s0 0($a0)
 	la $s1 fruit_data
 	sw $s1 FRUIT_SCAN
@@ -384,7 +390,8 @@ return_position:
 	lw $ra 0($sp)
 	lw $s0 4($sp)
 	lw $s1 8($sp)
-	add $sp $sp 12
+	lw $s2 12($sp)
+	add $sp $sp 16
 #	sw $v0 PRINT_INT
 	jr $ra
 return_false:
@@ -392,7 +399,8 @@ return_false:
 	lw $ra 0($sp)
 	lw $s0 4($sp)
 	lw $s1 8($sp)
-	add $sp $sp 12
+	lw $s2 12($sp)
+	add $sp $sp 16
 #	sw $v0 PRINT_INT
 	jr $ra
 

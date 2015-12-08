@@ -73,7 +73,7 @@ main:
 	or $t0 REQUEST_PUZZLE_MASK
 	or $t0 1
 	mtc0 $t0 $12
-initial_position:	
+initial_position:
 	lw $t0 BOT_Y
 	ble $t0 240 initial_down  # the initial height of the bot, can be set higher
 	bge $t0 260 intial_up
@@ -86,7 +86,7 @@ intial_up:
 set_angle:
 	sw $t0 ANGLE
 	li $t0 1
-	sw $t0 ANGLE_CONTROL 
+	sw $t0 ANGLE_CONTROL
 	li $t0 10
 	sw $t0 VELOCITY
 	j initial_position
@@ -152,7 +152,7 @@ energy:
 	lw $t3 GET_ENERGY
 	bgt $t3 50 initial_position
 	lw $t3 requested_puzzle
-	beq $zero $t3 puzzle
+	beq $0 $t3 puzzle
 	j initial_position
 
 puzzle:
@@ -396,25 +396,25 @@ unhandled_str:	.asciiz "Unhandled interrupt type\n"
 .ktext 0x80000180
 interrupt_handler:
 .set noat
-	move	$k1, $at		# Save $at                               
+	move	$k1, $at		# Save $at
 .set at
 	la	$k0, chunkIH
-	sw	$a0, 0($k0)		# Get some free registers                  
-	sw	$a1, 4($k0)		# by storing them to a global variable  
+	sw	$a0, 0($k0)		# Get some free registers
+	sw	$a1, 4($k0)		# by storing them to a global variable
 	sw  $a2, 8($k0)
-	sw  $a3, 12($k0)   
+	sw  $a3, 12($k0)
 
-	mfc0	$k0, $13		# Get Cause register                       
-	srl	$a0, $k0, 2                
-	and	$a0, $a0, 0xf		# ExcCode field                            
-	bne	$a0, 0, non_intrpt         
+	mfc0	$k0, $13		# Get Cause register
+	srl	$a0, $k0, 2
+	and	$a0, $a0, 0xf		# ExcCode field
+	bne	$a0, 0, non_intrpt
 
-interrupt_dispatch:			# Interrupt:                             
-	mfc0	$k0, $13		# Get Cause register, again                 
-	beq	$k0, 0, done		# handled all outstanding interrupts     
+interrupt_dispatch:			# Interrupt:
+	mfc0	$k0, $13		# Get Cause register, again
+	beq	$k0, 0, done		# handled all outstanding interrupts
 
-	and	$a0, $k0, BONK_MASK	# is there a bonk interrupt?                
-	bne	$a0, 0, bonk_interrupt   
+	and	$a0, $k0, BONK_MASK	# is there a bonk interrupt?
+	bne	$a0, 0, bonk_interrupt
 
 	and	$a0, $k0, TIMER_MASK	# is there a timer interrupt?
 	bne	$a0, 0, timer_interrupt
@@ -429,7 +429,7 @@ interrupt_dispatch:			# Interrupt:
 
 	li	$v0, PRINT_STRING	# Unhandled interrupt types
 	la	$a0, unhandled_str
-	syscall 
+	syscall
 	j	done
 
 request_puzzle_interrupt:
@@ -438,7 +438,7 @@ request_puzzle_interrupt:
 	li $a0 90
 	sw $a0 ANGLE
 	li $a0 1
-	sw $a0 ANGLE_CONTROL 
+	sw $a0 ANGLE_CONTROL
 	la $a0 puzzle_word
 	sw $a0 REQUEST_WORD
 	la $k0 puzzle_grid
@@ -459,7 +459,7 @@ request_puzzle_interrupt:
 	sw $a0 new_node_address
 	sw $a0 REQUEST_PUZZLE_ACK
 	j interrupt_dispatch
-	
+
 
 
 fruit_smooshed_interrupt:
@@ -499,7 +499,7 @@ timer_interrupt:
 	sw	$a1, TIMER_ACK		# acknowledge interrupt
 
 	li  $a1, 1
-	sw	$a1, cherry_calculation 
+	sw	$a1, cherry_calculation
 
 	j	interrupt_dispatch	# see if other interrupts are waiting
 
@@ -517,5 +517,5 @@ done:
 	lw  $a3, 12($k0)
 .set noat
 	move	$at, $k1		# Restore $at
-.set at 
+.set at
 	eret
