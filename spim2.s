@@ -127,22 +127,20 @@ move_left:
 	sw $t3 ANGLE
 	li $t3 1
 	sw $t3 ANGLE_CONTROL
-	ble $t2 -20 set10
-	j set10
+	ble $t2 2 set10
+	j up
 move_right:
 	li $t3 0
 	sw $t3 ANGLE
 	li $t3 1
 	sw $t3 ANGLE_CONTROL
-	bge $t2 20 set10
-	j set10
-
-set2:
-	li $t3 3
-	j set
-set5:
-	li $t3 5
-	j set
+	bge $t2 2 set10
+	j up
+up:
+	li $t3 -90
+	sw $t3 ANGLE
+	li $t3 1
+	sw $t3 ANGLE_CONTROL
 set10:
 	li $t3 10
 	j set
@@ -247,6 +245,24 @@ fruit_smooshed_interrupt:
 	lw $a0 smooshed
 	add $a0 $a0 1
 	sw $a0 smooshed
+adjust_position:
+	lw $a0 BOT_Y
+	ble $a0 270 adjust_down  # the initial height of the bot, can be set higher
+	bge $a0 280 adjust_up
+	j finish
+adjust_down:
+	li $a0 90
+	j set_angle1
+adjust_up:
+	li $a0 -90
+set_angle1:
+	sw $a0 ANGLE
+	li $a0 1
+	sw $a0 ANGLE_CONTROL
+	li $a0 10
+	sw $a0 VELOCITY
+	j adjust_position
+finish:
 	sw $a0 SMOOSHED_ACK
 	j interrupt_dispatch
 
