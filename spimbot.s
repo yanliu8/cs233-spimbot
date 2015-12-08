@@ -357,10 +357,11 @@ return_cherry:
 # a0: old address of the target fruit
 # v0: new address of the target fruit, null if does not exist.
 get_position:
-	sub $sp $sp 12
+	sub $sp $sp 16
 	sw $ra 0($sp)
 	sw $s0 4($sp)
 	sw $s1 8($sp)
+	sw $s2 12($sp)
 	lw $s0 0($a0)
 	la $s1 fruit_data
 	sw $s1 FRUIT_SCAN
@@ -375,14 +376,16 @@ return_position:
 	lw $ra 0($sp)
 	lw $s0 4($sp)
 	lw $s1 8($sp)
-	add $sp $sp 12
+	lw $s2 12($sp)
+	add $sp $sp 16
 	jr $ra
 return_false:
 	move $v0 $0
 	lw $ra 0($sp)
 	lw $s0 4($sp)
 	lw $s1 8($sp)
-	add $sp $sp 12
+	lw $s2 12($sp)
+	add $sp $sp 16
 	jr $ra
 
 
